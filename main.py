@@ -168,8 +168,10 @@ def download_insta(request: Request, body: InstaRequest):
         
         logger.info(f"Successfully processed {shortcode}")
         return {
-            "play": video_url,
-            "title": title
+            "data": {
+                "play": video_url,
+                "title": title
+            }
         }
 
     except instaloader.exceptions.InstaloaderException as e:
