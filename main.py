@@ -83,7 +83,7 @@ def download_insta(request: Request, body: InstaRequest):
     shortcode = match.group(1)
     logger.info(f"Extracted shortcode: {shortcode}")
 
-    max_retries = 3
+    max_retries = 20
     last_exception = None
 
     for attempt in range(max_retries):
@@ -127,6 +127,8 @@ def download_insta(request: Request, body: InstaRequest):
             last_exception = e
             # If it's the last attempt, we'll raise the error later
             if attempt < max_retries - 1:
+                # Add a small random delay between retries to avoid hammering
+                time.sleep(random.uniform(1, 3))
                 continue
         except instaloader.exceptions.InstaloaderException as e:
             # Other instaloader exceptions (like 404) might not be recoverable by switching proxy
