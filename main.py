@@ -12,6 +12,8 @@ from pathlib import Path
 from moviepy import VideoFileClip
 from dotenv import load_dotenv
 from proxy_manager import ProxyManager
+import time
+import random
 
 load_dotenv()
 
