@@ -100,7 +100,9 @@ def download_insta(request: Request, body: InstaRequest):
             # Instaloader replaces {target} with the target name passed to download_post.
             L = instaloader.Instaloader(
                 dirname_pattern=str(DOWNLOADS_DIR / "{target}"),
-                user_agent=user_agent
+                user_agent=user_agent,
+                resume_prefix=None, # Disable resume files to prevent state leakage
+                max_connection_attempts=1 # Fail fast to rotate proxy
             )
 
             # Configure Proxy if available
