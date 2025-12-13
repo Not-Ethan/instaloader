@@ -9,6 +9,7 @@ import asyncio
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
+from moviepy import VideoFileClip
 
 # Configure logging
 logging.basicConfig(
@@ -104,6 +105,50 @@ def download_insta(request: Request, body: InstaRequest):
              logger.error(f"Video file not found in {target_path}")
              raise HTTPException(status_code=500, detail="Video file not found after download.")
         
+        # Transcode video to ensure specific format
+        input_path = video_files[0]
+        temp_output_path = input_path.with_name(f"processed_{input_path.name}")
+        
+        logger.info(f"Transcoding video {input_path} to {temp_output_path}...")
+        
+        try:
+            clip = VideoFileClip(str(input_path))
+            fps = clip.fps if clip.fps else 30
+            
+            clip.write_videofile(
+                str(temp_output_path),
+                fps=fps,
+                codec="libx264",
+                audio_codec="aac",
+                preset="ultrafast",
+                audio_bitrate="128k",
+                threads=0,
+                bitrate="4000k",
+                ffmpeg_params=[
+                    "-pix_fmt", "yuv420p",
+                    "-profile:v", "main",
+                    "-level:v", "4.0",
+                    "-movflags", "+faststart",
+                    "-g", str(int(fps * 2)),
+                    "-vf", f"fps={fps}",
+                    "-maxrate", "4000k",
+                    "-bufsize", "8000k"
+                ],
+                temp_audiofile=str(target_path / "_temp-audio.m4a"),
+                remove_temp=True,
+                logger=None
+            )
+            clip.close()
+            
+            # Replace original file with processed file
+            input_path.unlink()
+            temp_output_path.rename(input_path)
+            logger.info("Transcoding complete.")
+            
+        except Exception as e:
+            logger.error(f"Error during transcoding: {e}")
+            raise HTTPException(status_code=500, detail=f"Transcoding failed: {str(e)}")
+
         video_filename = video_files[0].name
         # Construct the full URL to the video file
         # request.base_url ends with a slash, e.g., http://localhost:8000/
