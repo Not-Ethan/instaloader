@@ -115,6 +115,7 @@ def download_insta(request: Request, body: InstaRequest):
         post_data = data[0]
         video_url = post_data.get("videoUrl")
         title = post_data.get("caption", "")
+        owner_username = post_data.get("ownerUsername") or post_data.get("owner", {}).get("username")
 
         if not video_url:
             logger.error("No video URL found in Apify response")
@@ -177,7 +178,7 @@ def download_insta(request: Request, body: InstaRequest):
                 remove_temp=True,
                 logger=None
             )
-            clip.close()
+
             
             # Replace original file with processed file
             input_path.unlink()
@@ -196,7 +197,8 @@ def download_insta(request: Request, body: InstaRequest):
         return {
             "data": {
                 "play": served_video_url,
-                "title": title
+                "title": title,
+                "authorUsername": owner_username
             }
         }
 
@@ -210,4 +212,3 @@ def download_insta(request: Request, body: InstaRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
